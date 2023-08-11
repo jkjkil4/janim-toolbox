@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 			janim: {
 				type: 'undo_code'
 			}
-		}));
+		}), port);
 	});
 
 	// context.subscriptions.push(disposable);
