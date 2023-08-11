@@ -3,7 +3,7 @@
   "displayName": "janim-toolbox",
   "description": "",
   "publisher": "jkjkil4",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": "https://github.com/jkjkil4/janim-toolbox",
   "engines": {
     "vscode": "^1.81.0"
@@ -18,10 +18,12 @@
       {
         "command": "janim-toolbox.set-port",
         "title": "JAnim: Set Port"
-      }, {
+      },
+      {
         "command": "janim-toolbox.execute-code",
         "title": "JAnim: Execute Selection Code"
-      }, {
+      },
+      {
         "command": "janim-toolbox.undo-code",
         "title": "JAnim: Undo Code"
       }
