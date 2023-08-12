@@ -30,12 +30,20 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		
 		const selection = editor.selection;
-		const lineMin = Math.min(selection.anchor.line, selection.active.line);
-		const lineMax = Math.max(selection.anchor.line, selection.active.line);
+		const start = selection.start;
+		let end = selection.end;
+
+		const lastLine = editor.document.lineAt(end.line);
+		if (lastLine.firstNonWhitespaceCharacterIndex < end.character) {
+			end = new vscode.Position(end.line + 1, 0);
+		} else {
+			end = new vscode.Position(end.line, 0);
+		}
+
 		const text = editor.document.getText(
 			new vscode.Range(
-				new vscode.Position(lineMin, 0),
-				new vscode.Position(lineMax + 1, 0)
+				new vscode.Position(start.line, 0),
+				end
 			)
 		);
 

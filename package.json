@@ -27,6 +27,20 @@
         "command": "janim-toolbox.undo-code",
         "title": "JAnim: Undo Code"
       }
+    ],
+    "keybindings": [
+      {
+        "command": "janim-toolbox.set-port",
+        "key": "ctrl+J ctrl+P"
+      },
+      {
+        "command": "janim-toolbox.execute-code",
+        "key": "ctrl+J ctrl+C"
+      },
+      {
+        "command": "janim-toolbox.undo-code",
+        "key": "ctrl+J ctrl+U"
+      }
     ]
   },
   "scripts": {
