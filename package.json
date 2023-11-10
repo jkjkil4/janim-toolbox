@@ -3,7 +3,7 @@
   "displayName": "janim-toolbox",
   "description": "",
   "publisher": "jkjkil4",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": "https://github.com/jkjkil4/janim-toolbox",
   "engines": {
     "vscode": "^1.81.0"
@@ -52,14 +52,14 @@
     ],
     "colors": [
       {
-				"id": "janim_toolbox.hint_background",
-				"description": "Background decoration color for line hint",
-				"defaults": {
-					"dark": "#FF000055",
-					"light": "#FF000055",
-					"highContrast": "#FF000055"
-				}
-			}
+        "id": "janim_toolbox.hint_background",
+        "description": "Background decoration color for line hint",
+        "defaults": {
+          "dark": "#FF000055",
+          "light": "#FF000055",
+          "highContrast": "#FF000055"
+        }
+      }
     ]
   },
   "scripts": {
