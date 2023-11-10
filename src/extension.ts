@@ -68,7 +68,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reset', async () => {
 		port = -1;
 		clearExecuted();
-		vscode.window.showInformationMessage('已重置状态（注意：该操作未撤销先前执行过的代码）');
+		vscode.window.setStatusBarMessage('已重置状态（注意：该操作未撤销先前执行过的代码）', 3000);
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.set-port', async () => {
