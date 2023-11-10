@@ -73,7 +73,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.set-port', async () => {
 		const ret = await vscode.window.showInputBox({title: '输入调试端口：'});
-		if (!ret || ret.length === 0) {
+		if (!ret) {
 			return;
 		}
 		port = Number(ret);
@@ -222,7 +222,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		}
 		
 		const ret = await vscode.window.showInputBox({title: '输入要查看子物件序号的对象（留空表示清除显示）：', value: prevDisplayedCIV });
-		if (!ret) {
+		if (ret === undefined) {
 			return;
 		}
 		if (ret.length !== 0) {
