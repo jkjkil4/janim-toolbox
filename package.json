@@ -49,6 +49,17 @@
         "command": "janim-toolbox.display-children-index",
         "key": "ctrl+J ctrl+I"
       }
+    ],
+    "colors": [
+      {
+				"id": "janim_toolbox.hint_background",
+				"description": "Background decoration color for line hint",
+				"defaults": {
+					"dark": "#FF000055",
+					"light": "#FF000055",
+					"highContrast": "#FF000055"
+				}
+			}
     ]
   },
   "scripts": {

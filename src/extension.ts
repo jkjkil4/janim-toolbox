@@ -93,6 +93,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	function addExecuted(lastLineNumber: number) {
 		executed.push(lastLineNumber);
 		updateStatusBarItem();
+		updateDecos();
 	}
 	function undoExecuted() {
 		if (isExecutedEmpty()) {
@@ -100,6 +101,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		}
 		executed.pop();
 		updateStatusBarItem();
+		updateDecos();
 	}
 	function lastExecuted(): number {
 		if (isExecutedEmpty()) {
@@ -110,6 +112,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	function clearExecuted() {
 		executed = [];
 		updateStatusBarItem();
+		updateDecos();
 	}
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reset', async () => {
@@ -249,6 +252,30 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			});
 		}
 	));
+
+	const hintDecoType = vscode.window.createTextEditorDecorationType({
+		backgroundColor: { id: 'janim_toolbox.hint_background' }
+	});
+
+	function updateDecos() {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return;
+		}
+
+		if (isExecutedEmpty()) {
+			editor.setDecorations(hintDecoType, []);
+		} else {
+			const lineNumber = lastExecuted();
+			editor.setDecorations(hintDecoType, [{
+				range: new vscode.Range(
+					new vscode.Position(lineNumber, 0),
+					new vscode.Position(lineNumber + 1, 0)
+				),
+				hoverMessage: '执行到的最后一行'
+			}]);
+		}
+	}
 
 	let prevDisplayedCIV = "";
 
