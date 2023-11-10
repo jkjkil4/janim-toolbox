@@ -17,7 +17,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	}
 
 	let port = -1;
-	let socket: dgram.Socket | undefined = undefined;
+	let socket = dgram.createSocket('udp4');
 
 	async function ensurePortAvailable(): Promise<boolean> {
 		if (port === -1) {
@@ -27,10 +27,6 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	}
 
 	function sendUndo() {
-		if (!socket) {
-			return;
-		}
-
 		socket.send(JSON.stringify({
 			janim: {
 				type: 'undo_code'
@@ -77,14 +73,11 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			return;
 		}
 		port = Number(ret);
-		if (!socket) {
-			socket = dgram.createSocket('udp4');
-		}
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.execute-code', async () => {
 		const editor = vscode.window.activeTextEditor;
-		if (!await ensurePortAvailable() || !socket || !editor) {
+		if (!await ensurePortAvailable() || !editor) {
 			return;
 		}
 		
@@ -171,7 +164,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.undo-code', async () => {
-		if (!await ensurePortAvailable() || !socket) {
+		if (!await ensurePortAvailable()) {
 			return;
 		}
 		undoExecuted();
@@ -217,7 +210,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	let prevDisplayedCIV = "";
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.display-children-index', async () => {
-		if (!await ensurePortAvailable() || !socket) {
+		if (!await ensurePortAvailable()) {
 			return;
 		}
 		
