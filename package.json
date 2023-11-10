@@ -3,7 +3,7 @@
   "displayName": "janim-toolbox",
   "description": "",
   "publisher": "jkjkil4",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "repository": "https://github.com/jkjkil4/janim-toolbox",
   "engines": {
     "vscode": "^1.81.0"
