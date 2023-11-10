@@ -16,6 +16,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "janim-toolbox.reset",
+        "title": "JAnim: Reset"
+      },
+      {
         "command": "janim-toolbox.set-port",
         "title": "JAnim: Set Port"
       },
@@ -29,6 +33,10 @@
       }
     ],
     "keybindings": [
+      {
+        "command": "janim-toolbox.reset",
+        "key": "ctrl+J ctrl+R"
+      },
       {
         "command": "janim-toolbox.set-port",
         "key": "ctrl+J ctrl+P"

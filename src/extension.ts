@@ -60,6 +60,16 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		}
 		return executed[executed.length - 1];
 	}
+	function clearExecuted() {
+		executed = [];
+		updateStatusBarItem();
+	}
+
+	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reset', async () => {
+		port = -1;
+		clearExecuted();
+		vscode.window.showInformationMessage('已重置状态（注意：该操作未撤销先前执行过的代码）');
+	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.set-port', async () => {
 		const ret = await vscode.window.showInputBox({title: '输入调试端口：'});
@@ -127,6 +137,11 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			}
 			addExecuted(end.line);
 		} else {
+			for (let i = 0; i < executed.length; i++) {
+				sendUndo();
+			}
+			clearExecuted();
+
 			// 对区间进行扩展使其覆盖整行
 			const lastLine = editor.document.lineAt(end.line);
 			let adjustedEnd: vscode.Position;
