@@ -214,14 +214,19 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		}
 	));
 
+	let prevDisplayedCIV = "";
+
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.display-children-index', async () => {
 		if (!await ensurePortAvailable() || !socket) {
 			return;
 		}
 		
-		const ret = await vscode.window.showInputBox({title: '输入要查看子物件序号的对象：'});
+		const ret = await vscode.window.showInputBox({title: '输入要查看子物件序号的对象（留空表示清除显示）：', value: prevDisplayedCIV });
 		if (!ret) {
 			return;
+		}
+		if (ret.length !== 0) {
+			prevDisplayedCIV = ret;
 		}
 
 		socket.send(JSON.stringify({
