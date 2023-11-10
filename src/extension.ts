@@ -165,14 +165,38 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 	subscriptions.push(vscode.workspace.onDidChangeTextDocument(
 		(event: vscode.TextDocumentChangeEvent) => {
+			const document = event.document;
 			const changes = event.contentChanges;
 
 			changes.forEach(change => {
-				const startLineNumber = change.range.start.line;
+				console.log("========");
+				console.log("start:", change.range.start.line, change.range.start.character);
+				console.log("end:",change.range.end.line, change.range.end.character);
+				console.log("lineLength:", document.lineAt(change.range.end.line).text.length);
+				
+				const start = change.range.start;
+				const end = change.range.end;
+				const line = document.lineAt(start.line);
+
 				for (let i = executed.length - 1; i >= 0; i--) {
-					if (executed[i] < startLineNumber) {
+					// 如果修改位置在已执行到位置的后面，则结束处理
+					if (executed[i] < start.line) {
 						break;
 					}
+
+					// 对仅换行的情况进行忽略
+					if (start.isEqual(end) && start.line === executed[i] && start.character === line.text.length) {
+						const endLineNumber = (
+							line.text.length === end.character
+							? end.line + 1
+							: end.line
+						);
+						if (document.lineAt(endLineNumber).isEmptyOrWhitespace) {
+							continue;
+						}
+					}
+
+					// 修改位置在已执行到位置处，或更前面，则撤销该步
 					undoExecuted();
 					sendUndo();
 				}
