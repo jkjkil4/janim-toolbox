@@ -169,11 +169,6 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			const changes = event.contentChanges;
 
 			changes.forEach(change => {
-				console.log("========");
-				console.log("start:", change.range.start.line, change.range.start.character);
-				console.log("end:",change.range.end.line, change.range.end.character);
-				console.log("lineLength:", document.lineAt(change.range.end.line).text.length);
-				
 				const start = change.range.start;
 				const end = change.range.end;
 				const line = document.lineAt(start.line);
