@@ -95,12 +95,12 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			if (isExecutedEmpty()) {
 				const lastLine = editor.document.lineAt(end.line);
 
-				// 得到缩进相同部分的首行
+				// 得到缩进相同（或缩进更多）部分的首行
 				const indent = lastLine.firstNonWhitespaceCharacterIndex;
 				let startLineNumber = end.line;
 				for (let i = end.line - 1; i >= 0; i--) {
 					const line = editor.document.lineAt(i);
-					if (!line.isEmptyOrWhitespace && line.firstNonWhitespaceCharacterIndex !== indent) {
+					if (!line.isEmptyOrWhitespace && line.firstNonWhitespaceCharacterIndex < indent) {
 						break;
 					}
 					startLineNumber = i;
