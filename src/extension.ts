@@ -19,10 +19,61 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	let port = -1;
 	let socket = dgram.createSocket('udp4');
 
-	async function ensurePortAvailable(): Promise<boolean> {
-		if (port === -1) {
-			await vscode.commands.executeCommand('janim-toolbox.set-port');
+	let selectableClients: Array<number> = [];
+
+	socket.on('message', (msg: Buffer, rinfo: dgram.RemoteInfo) => {
+		const json = JSON.parse(msg.toString());
+		if (json.janim && json.janim.type) {
+			const type = json.janim.type;
+			switch (type) {
+				case 'find_re': {
+					const port = json.janim.data;
+					if (port) {
+						selectableClients.push(port);
+					}
+				}
+			}
 		}
+	});
+
+	async function ensurePortAvailable(): Promise<boolean> {
+		if (port !== -1) {
+			return true;
+		}
+
+		selectableClients = [];
+
+		socket.send(JSON.stringify({ 
+			janim: { 
+				type: 'find' 
+			} 
+		}), 40565, '127.255.255.255');
+
+		await new Promise(resolve => setTimeout(resolve, 100));
+
+		if (selectableClients.length === 0) {
+			vscode.window.showErrorMessage('没有找到可用的界面端');
+			return false;
+		}
+
+		if (selectableClients.length === 1) {
+			port = selectableClients[0];
+		} else {
+			let ports: Array<string> = [];
+			selectableClients.forEach(port => {
+				ports.push(port.toString());
+			});
+
+			let ret = await vscode.window.showQuickPick(ports, { title: '存在多个界面端，请选择端口：' });
+			if (ret) {
+				port = Number(ret);
+			}
+		}
+
+		if (port !== -1) {
+			vscode.window.setStatusBarMessage(`已连接至界面端 ${port}`, 3000);
+		}
+
 		return port !== -1;
 	}
 
@@ -65,14 +116,6 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		port = -1;
 		clearExecuted();
 		vscode.window.setStatusBarMessage('已重置状态（注意：该操作未撤销先前执行过的代码）', 3000);
-	}));
-
-	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.set-port', async () => {
-		const ret = await vscode.window.showInputBox({title: '输入调试端口：'});
-		if (!ret) {
-			return;
-		}
-		port = Number(ret);
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.execute-code', async () => {
