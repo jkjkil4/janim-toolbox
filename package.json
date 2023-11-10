@@ -30,6 +30,10 @@
       {
         "command": "janim-toolbox.undo-code",
         "title": "JAnim: Undo Code"
+      },
+      {
+        "command": "janim-toolbox.display-children-index",
+        "title": "JAnim: Display Children Index"
       }
     ],
     "keybindings": [
@@ -48,6 +52,10 @@
       {
         "command": "janim-toolbox.undo-code",
         "key": "ctrl+J ctrl+U"
+      },
+      {
+        "command": "janim-toolbox.display-children-index",
+        "key": "ctrl+J ctrl+I"
       }
     ]
   },

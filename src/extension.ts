@@ -213,6 +213,24 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			});
 		}
 	));
+
+	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.display-children-index', async () => {
+		if (!await ensurePortAvailable() || !socket) {
+			return;
+		}
+		
+		const ret = await vscode.window.showInputBox({title: '输入要查看子物件序号的对象：'});
+		if (!ret) {
+			return;
+		}
+
+		socket.send(JSON.stringify({
+			janim: {
+				type: 'display_children_index',
+				data: ret
+			}
+		}), port);
+	}));
 }
 
 // export function deactivate() {}
