@@ -121,6 +121,29 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		vscode.window.setStatusBarMessage('已重置状态（注意：该操作未撤销先前执行过的代码）', 3000);
 	}));
 
+	function getFullCodeAtRange(start: vscode.Position, end: vscode.Position): string {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return '';
+		}
+
+		// 对区间进行扩展使其覆盖整行
+		const lastLine = editor.document.lineAt(end.line);
+		let adjustedEnd: vscode.Position;
+		if (lastLine.firstNonWhitespaceCharacterIndex < end.character) {
+			adjustedEnd = new vscode.Position(end.line + 1, 0);
+		} else {
+			adjustedEnd = new vscode.Position(end.line, 0);
+		}
+
+		return editor.document.getText(
+			new vscode.Range(
+				new vscode.Position(start.line, 0),
+				adjustedEnd
+			)
+		);
+	}
+
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.execute-code', async () => {
 		const editor = vscode.window.activeTextEditor;
 		if (!await ensurePortAvailable() || !editor) {
@@ -181,26 +204,12 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			}
 			clearExecuted();
 
-			// 对区间进行扩展使其覆盖整行
-			const lastLine = editor.document.lineAt(end.line);
-			let adjustedEnd: vscode.Position;
-			if (lastLine.firstNonWhitespaceCharacterIndex < end.character) {
-				adjustedEnd = new vscode.Position(end.line + 1, 0);
-			} else {
-				adjustedEnd = new vscode.Position(end.line, 0);
-			}
-
 			// 数据设置
-			text = editor.document.getText(
-				new vscode.Range(
-					new vscode.Position(start.line, 0),
-					adjustedEnd
-				)
-			);
+			text = getFullCodeAtRange(start, end);
 			addExecuted(end.line);
 		}
 
-		// 向调试端发送文本
+		// 向调试端发送代码
 		socket.send(JSON.stringify({
 			janim: {
 				type: 'exec_code',
@@ -215,6 +224,25 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		}
 		undoExecuted();
 		sendUndo();
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.raw-execute-code', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!await ensurePortAvailable() || !editor) {
+			return;
+		}
+
+		const selection = editor.selection;
+		const start = selection.start;
+		const end = selection.end;
+
+		// 向调试端发送代码
+		socket.send(JSON.stringify({
+			janim: {
+				type: 'raw_exec_code',
+				data: getFullCodeAtRange(start, end)
+			}
+		}), port);
 	}));
 
 	subscriptions.push(vscode.workspace.onDidChangeTextDocument(

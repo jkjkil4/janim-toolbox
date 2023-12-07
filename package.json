@@ -21,7 +21,11 @@
       },
       {
         "command": "janim-toolbox.execute-code",
-        "title": "JAnim: Execute Selection Code"
+        "title": "JAnim: Execute Code to the Cursor's Position or Execute the Selection Range"
+      },
+      {
+        "command": "janim-toolbox.raw-execute-code",
+        "title": "JAnim: Execute Selection Code without Saving State"
       },
       {
         "command": "janim-toolbox.undo-code",
@@ -40,6 +44,10 @@
       {
         "command": "janim-toolbox.execute-code",
         "key": "ctrl+J ctrl+C"
+      },
+      {
+        "command": "janim-toolbox.raw-execute-code",
+        "key": "ctrl+J ctrl+S"
       },
       {
         "command": "janim-toolbox.undo-code",
