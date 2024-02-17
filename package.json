@@ -16,22 +16,14 @@
   "contributes": {
     "commands": [
       {
-        "command": "janim-toolbox.reset",
-        "title": "JAnim: Reset"
-      },
-      {
-        "command": "janim-toolbox.reload",
-        "title": "JAnim: Reload Timeline"
+        "command": "janim-toolbox.connect",
+        "title": "JAnim: Connect"
       }
     ],
     "keybindings": [
       {
-        "command": "janim-toolbox.reset",
-        "key": "ctrl+J ctrl+R"
-      },
-      {
-        "command": "janim-toolbox.reload",
-        "key": "ctrl+J ctrl+L"
+        "command": "janim-toolbox.connect",
+        "key": "ctrl+J ctrl+C"
       }
     ],
     "colors": [

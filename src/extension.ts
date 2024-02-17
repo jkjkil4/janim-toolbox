@@ -19,6 +19,9 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 						selectableClients.push(port);
 					}
 				}
+				case 'close_event': {
+					port = -1;
+				}
 			}
 		}
 	});
@@ -59,27 +62,32 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 		if (port !== -1) {
 			vscode.window.setStatusBarMessage(`已连接至界面端 ${port}`, 3000);
+
+			socket.send(JSON.stringify({
+				janim: {
+					type: 'listen_close_event'
+				}
+			}), port);
 		}
 
 		return port !== -1;
 	}
 
-	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reset', async () => {
+	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.connect', async () => {
 		port = -1;
 		ensurePortAvailable();
 	}))
 
-	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reload', async () => {
-		if (!await ensurePortAvailable()) {
+	subscriptions.push(vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+		if (port === -1) {
 			return;
 		}
-
 		socket.send(JSON.stringify({
 			janim: {
-				type: 'reload'
+				type: 'file_saved',
+				file_path: document.fileName
 			}
 		}), port);
-		vscode.window.setStatusBarMessage('已执行: reload', 1000)
 	}));
 }
 
