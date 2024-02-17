@@ -20,20 +20,8 @@
         "title": "JAnim: Reset"
       },
       {
-        "command": "janim-toolbox.execute-code",
-        "title": "JAnim: Execute Code to the Cursor's Position or Execute the Selection Range"
-      },
-      {
-        "command": "janim-toolbox.raw-execute-code",
-        "title": "JAnim: Execute Selection Code without Saving State"
-      },
-      {
-        "command": "janim-toolbox.undo-code",
-        "title": "JAnim: Undo Code"
-      },
-      {
-        "command": "janim-toolbox.display-children-index",
-        "title": "JAnim: Display Children Index"
+        "command": "janim-toolbox.reload",
+        "title": "JAnim: Reload Timeline"
       }
     ],
     "keybindings": [
@@ -42,20 +30,8 @@
         "key": "ctrl+J ctrl+R"
       },
       {
-        "command": "janim-toolbox.execute-code",
-        "key": "ctrl+J ctrl+C"
-      },
-      {
-        "command": "janim-toolbox.raw-execute-code",
-        "key": "ctrl+J ctrl+S"
-      },
-      {
-        "command": "janim-toolbox.undo-code",
-        "key": "ctrl+J ctrl+U"
-      },
-      {
-        "command": "janim-toolbox.display-children-index",
-        "key": "ctrl+J ctrl+I"
+        "command": "janim-toolbox.reload",
+        "key": "ctrl+J ctrl+L"
       }
     ],
     "colors": [
