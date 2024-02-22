@@ -17,18 +17,26 @@
     "commands": [
       {
         "command": "janim-toolbox.connect",
-        "title": "JAnim: Connect"
+        "title": "JAnim: Connect to JAnim Window"
+      },
+      {
+        "command": "janim-toolbox.reload",
+        "title": "Janim: Reload Current File"
       }
     ],
     "keybindings": [
       {
         "command": "janim-toolbox.connect",
         "key": "ctrl+J ctrl+C"
+      },
+      {
+        "command": "janim-toolbox.reload",
+        "key": "ctrl+J ctrl+R"
       }
     ],
     "colors": [
       {
-        "id": "janim_toolbox.hint_background",
+        "id": "janim_toolbox.lineno_background",
         "description": "Background decoration color for line hint",
         "defaults": {
           "dark": "#FF000055",
