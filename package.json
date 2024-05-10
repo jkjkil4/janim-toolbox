@@ -21,7 +21,7 @@
       },
       {
         "command": "janim-toolbox.reload",
-        "title": "Janim: Reload Current File"
+        "title": "JAnim: Reload Current File"
       }
     ],
     "keybindings": [

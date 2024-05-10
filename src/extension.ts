@@ -53,6 +53,8 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				),
 				hoverMessage: '执行到的位置'
 			}]);
+			const pos = new vscode.Position(line, 0);
+			editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
 		}
 	}
 
