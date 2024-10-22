@@ -103,11 +103,14 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 		selectablePorts = [];
 
+		const config = vscode.workspace.getConfiguration('janim-toolbox');
+		const clientSearchPort = config.get<number>('clientSearchPort');
+
 		socket.send(JSON.stringify({
 			janim: {
 				type: 'find'
 			}
-		}), 40565, '127.255.255.255');
+		}), clientSearchPort, '127.255.255.255');
 
 		await new Promise(resolve => setTimeout(resolve, 100));
 

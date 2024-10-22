@@ -44,7 +44,19 @@
           "highContrast": "#FF000055"
         }
       }
-    ]
+    ],
+    "configuration": {
+      "title": "janim-toolbox Settings",
+      "properties": {
+        "janim-toolbox.clientSearchPort": {
+          "type": "number",
+          "default": 40565,
+          "description": "端口，用于搜索可用界面端",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
