@@ -110,7 +110,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			janim: {
 				type: 'find'
 			}
-		}), clientSearchPort, '127.255.255.255');
+		}), clientSearchPort, '127.0.0.1');
 
 		await new Promise(resolve => setTimeout(resolve, 100));
 
