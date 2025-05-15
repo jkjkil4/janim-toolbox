@@ -3,37 +3,32 @@ import * as vscode from 'vscode';
 import * as dgram from 'dgram';
 import * as path from 'path';
 
-class FoundPort {
+class FoundClient {
 	constructor(public port: number, public filePath: string) {}
 }
 
 export function activate({ subscriptions }: vscode.ExtensionContext) {
+	// ========= VSC Window =========
+	// 
+	// 创建状态栏项，用于显示连接状态
+	// 
+	// 使用 hintDecoType 来高亮当前动画所在的行数
+	// 其中 textChanged 用于控制在文本被修改后，不再高亮行数，需要重新构建后才会继续高亮
+
 	let statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	subscriptions.push(statusBarItem);
 	statusBarItem.show();
 
+	let textChanged = false;
 	const hintDecoType = vscode.window.createTextEditorDecorationType({
 		backgroundColor: { id: 'janim_toolbox.lineno_background' }
 	});
 
-	let port = new FoundPort(-1, '');
-	let textChanged = false;
-	let socket = dgram.createSocket('udp4');
-
-	let selectablePorts: Array<FoundPort> = [];
-
-	function setPort(value: FoundPort) {
-		port = value;
-		if (port.port === -1) {
-			textChanged = false;
-			statusBarItem.text = '未连接至界面端';
-		} else {
-			statusBarItem.text = `已连接至界面端 ${port.port}`;
-		}
-	}
-
 	function getEditor(): vscode.TextEditor | undefined {
-		const filePath = path.resolve(port.filePath).toLowerCase()
+		if (!client) {
+			return undefined;
+		}
+		const filePath = path.resolve(client.filePath).toLowerCase()
 		for (let editor of vscode.window.visibleTextEditors) {
 			if (filePath == path.resolve(editor.document.fileName).toLowerCase()) {
 				return editor;
@@ -58,13 +53,21 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		}
 	}
 
+	// ========= Socket =========
+	//
+	// 创建 UDP Socket，用于与界面端进行通信
+
+	let socket = dgram.createSocket('udp4');
+	let client: FoundClient | undefined = undefined;
+	let selectableClients: FoundClient[] = [];
+
 	socket.on('message', (msg: Buffer, rinfo: dgram.RemoteInfo) => {
 		const json = JSON.parse(msg.toString());
 		if (json.janim && json.janim.type) {
 			const type = json.janim.type;
 			switch (type) {
 				case 'find_re': {
-					selectablePorts.push(new FoundPort(json.janim.data.port, json.janim.data.file_path));
+					selectableClients.push(new FoundClient(json.janim.data.port, json.janim.data.file_path));
 					break;
 				}
 
@@ -73,7 +76,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 					if (editor) {
 						highlightLine(editor, -1);
 					}
-					setPort(new FoundPort(-1, ''));
+					setClient(undefined);
 					break;
 				}
 
@@ -96,12 +99,22 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		}
 	});
 
+	function setClient(value: FoundClient | undefined) {
+		client = value;
+		if (client) {
+			statusBarItem.text = `已连接至界面端 ${client.port}`;
+		} else {
+			textChanged = false;
+			statusBarItem.text = '未连接至界面端';
+		}
+	}
+
 	async function ensurePortAvailable(): Promise<boolean> {
-		if (port.port !== -1) {
+		if (client) {
 			return true;
 		}
 
-		selectablePorts = [];
+		selectableClients = [];
 
 		const config = vscode.workspace.getConfiguration('janim-toolbox');
 		const clientSearchPort = config.get<number>('clientSearchPort');
@@ -114,41 +127,47 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 		await new Promise(resolve => setTimeout(resolve, 100));
 
-		if (selectablePorts.length === 0) {
+		if (selectableClients.length === 0) {
 			vscode.window.showErrorMessage('没有找到可用的界面端');
 			return false;
 		}
 
-		if (selectablePorts.length === 1) {
-			setPort(selectablePorts[0]);
+		let selectedClient: FoundClient | undefined = undefined;
+
+		if (selectableClients.length === 1) {
+			selectedClient = selectableClients[0];
 		} else {
-			let ports = selectablePorts.map(port => {
+			let ports = selectableClients.map(port => {
 				return {label: port.port.toString(), value: port};
 			});
 
 			let ret = await vscode.window.showQuickPick(ports, { title: '存在多个界面端，请选择端口：' });
 			if (ret) {
-				setPort(ret.value);
+				selectedClient = ret.value;
 			}
 		}
 
-		if (port.port !== -1) {
+		if (selectedClient) {
 			socket.send(JSON.stringify({
 				janim: {
 					type: 'register_client'
 				}
-			}), port.port);
+			}), selectedClient.port);
+			setClient(selectedClient);
+			return true;
 		}
 
-		return port.port !== -1;
+		return false;
 	}
 
+	// ==========================
+
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.connect', async () => {
-		setPort(new FoundPort(-1, ''));
+		setClient(undefined);
 		await ensurePortAvailable();
 	}));
 
-	subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
+	subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {	
 		textChanged = true;
 		const editor = getEditor();
 		if (editor) {
@@ -157,7 +176,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	}));
 
 	subscriptions.push(vscode.workspace.onDidSaveTextDocument((document) => {
-		if (port.port === -1) {
+		if (!client) {
 			return;
 		}
 		socket.send(JSON.stringify({
@@ -165,12 +184,12 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				type: 'file_saved',
 				file_path: document.fileName
 			}
-		}), port.port);
+		}), client.port);
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reload', async () => {
 		const editor = vscode.window.activeTextEditor;
-		if (!await ensurePortAvailable() || !editor) {
+		if (!await ensurePortAvailable() || !editor || !client) {
 			return;
 		}
 		socket.send(JSON.stringify({
@@ -178,7 +197,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				type: 'reload',
 				file_path: editor.document.fileName
 			}
-		}), port.port);
+		}), client.port);
 	}));
 }
 
