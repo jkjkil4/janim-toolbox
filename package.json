@@ -19,12 +19,20 @@
       {
         "command": "janim-toolbox.connect",
         "title": "JAnim: Connect to JAnim Window"
+      },
+      {
+        "command": "janim-toolbox.locate-line",
+        "title": "JAnim: Locate to Current Line"
       }
     ],
     "keybindings": [
       {
         "command": "janim-toolbox.connect",
         "key": "ctrl+J ctrl+C"
+      },
+      {
+        "command": "janim-toolbox.locate-line",
+        "key": "ctrl+J ctrl+L"
       }
     ],
     "colors": [

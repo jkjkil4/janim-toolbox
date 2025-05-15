@@ -58,12 +58,16 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				),
 				hoverMessage: '执行到的位置'
 			}]);
-			const pos = new vscode.Position(line, 0);
 			if (line !== highlighting) {
-				editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
+				revealLine(editor, line);
 			}
 		}
 		highlighting = line;
+	}
+
+	function revealLine(editor: vscode.TextEditor, line: number) {
+		const pos = new vscode.Position(line, 0);
+		editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
 	}
 
 	// ========= Socket =========
@@ -177,11 +181,6 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 	// ==========================
 
-	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.connect', async () => {
-		setClient(undefined);
-		await ensurePortAvailable();
-	}));
-
 	subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
 		// 由于在保存时会触发 0 变化的文字更改事件，所以这里过滤
 		if (event.contentChanges.length === 0 || vscode.window.activeTextEditor !== getEditor()) {
@@ -209,22 +208,21 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 	subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
 		// 因为切换活动编辑器后，原有的 deco 会被清除，所以这里需要重新设置
-		if (editor && editor.document.uri === cachedEditor?.document.uri) {
+		if (editor && editor.document.uri === getEditor()?.document.uri) {
 			highlightLine(editor, highlighting);
 		}
 	}));
 
-	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reload', async () => {
-		const editor = vscode.window.activeTextEditor;
-		if (!await ensurePortAvailable() || !editor || !client) {
-			return;
+	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.connect', async () => {
+		setClient(undefined);
+		await ensurePortAvailable();
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.locate-line', async () => {
+		const editor = getEditor();
+		if (editor && highlighting !== -1) {
+			revealLine(editor, highlighting);
 		}
-		socket.send(JSON.stringify({
-			janim: {
-				type: 'reload',
-				file_path: editor.document.fileName
-			}
-		}), client.port);
 	}));
 }
 
