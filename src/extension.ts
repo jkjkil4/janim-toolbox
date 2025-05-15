@@ -14,6 +14,8 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	// 
 	// 使用 hintDecoType 来高亮当前动画所在的行数
 	// 其中 textChanged 用于控制在文本被修改后，不再高亮行数，需要重新构建后才会继续高亮
+	// 
+	// highlighting 用于记录上次的高亮行数，保证传入 highlightLine 的行数相同时，不重复触发编辑器行数跳转
 
 	let statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	subscriptions.push(statusBarItem);
@@ -24,20 +26,31 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		backgroundColor: { id: 'janim_toolbox.lineno_background' }
 	});
 
+	let cachedEditor: vscode.TextEditor | undefined = undefined;
+
 	function getEditor(): vscode.TextEditor | undefined {
 		if (!client) {
 			return undefined;
 		}
+		if (cachedEditor) {
+			return cachedEditor;
+		}
 		const filePath = path.resolve(client.filePath).toLowerCase()
 		for (let editor of vscode.window.visibleTextEditors) {
 			if (filePath == path.resolve(editor.document.fileName).toLowerCase()) {
+				cachedEditor = editor;
 				return editor;
 			}
 		}
 		return undefined;
 	}
 
+	let highlighting = -1;
+
 	function highlightLine(editor: vscode.TextEditor, line: number) {
+		if (line === highlighting) {
+			return;
+		}
 		if (line === -1) {
 			editor.setDecorations(hintDecoType, []);
 		} else {
@@ -51,6 +64,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			const pos = new vscode.Position(line, 0);
 			editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
 		}
+		highlighting = line;
 	}
 
 	// ========= Socket =========
@@ -82,6 +96,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 				case 'rebuilt': {
 					textChanged = false;
+					break;
 				}
 
 				case 'lineno': {
@@ -105,6 +120,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			statusBarItem.text = `已连接至界面端 ${client.port}`;
 		} else {
 			textChanged = false;
+			cachedEditor = undefined;
 			statusBarItem.text = '未连接至界面端';
 		}
 	}
@@ -167,7 +183,12 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		await ensurePortAvailable();
 	}));
 
-	subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {	
+	subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
+		// 由于在保存时会触发 0 变化的文字更改事件，所以这里过滤
+		if (event.contentChanges.length === 0 || vscode.window.activeTextEditor !== getEditor()) {
+			return;
+		}
+
 		textChanged = true;
 		const editor = getEditor();
 		if (editor) {
