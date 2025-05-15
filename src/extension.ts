@@ -46,6 +46,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	}
 
 	let highlighting = -1;
+	let autoLocate = true;
 
 	function highlightLine(editor: vscode.TextEditor, line: number) {
 		if (line === -1) {
@@ -58,7 +59,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				),
 				hoverMessage: '执行到的位置'
 			}]);
-			if (line !== highlighting) {
+			if (autoLocate && line !== highlighting) {
 				revealLine(editor, line);
 			}
 		}
@@ -222,6 +223,15 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		const editor = getEditor();
 		if (editor && highlighting !== -1) {
 			revealLine(editor, highlighting);
+		}
+	}));
+
+	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.switch-auto-locate', async () => {
+		autoLocate = !autoLocate;
+		if (autoLocate) {
+			vscode.window.setStatusBarMessage('自动定位已开启', 1000);
+		} else {
+			vscode.window.setStatusBarMessage('自动定位已关闭', 1000);
 		}
 	}));
 }
