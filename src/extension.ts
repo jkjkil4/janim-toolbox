@@ -48,9 +48,6 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	let highlighting = -1;
 
 	function highlightLine(editor: vscode.TextEditor, line: number) {
-		if (line === highlighting) {
-			return;
-		}
 		if (line === -1) {
 			editor.setDecorations(hintDecoType, []);
 		} else {
@@ -62,7 +59,9 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				hoverMessage: '执行到的位置'
 			}]);
 			const pos = new vscode.Position(line, 0);
-			editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
+			if (line !== highlighting) {
+				editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
+			}
 		}
 		highlighting = line;
 	}
@@ -206,6 +205,13 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				file_path: document.fileName
 			}
 		}), client.port);
+	}));
+
+	subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
+		// 因为切换活动编辑器后，原有的 deco 会被清除，所以这里需要重新设置
+		if (editor && editor.document.uri === cachedEditor?.document.uri) {
+			highlightLine(editor, highlighting);
+		}
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.reload', async () => {
