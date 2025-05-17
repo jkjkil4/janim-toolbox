@@ -4,7 +4,7 @@
   "description": "",
   "publisher": "jkjkil4",
   "icon": "icon.png",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "repository": "https://github.com/jkjkil4/janim-toolbox",
   "engines": {
     "vscode": "^1.81.0"
