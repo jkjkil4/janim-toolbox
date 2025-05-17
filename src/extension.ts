@@ -29,9 +29,10 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	let highlighting = -1;
 	let autoLocate = true;
 
-	function highlightLine(line: number) {
+	function highlightLine(line: number, disable_reveal: boolean = false) {
+		// 使用 -1 表示不高亮，-2 表示是由文本保存导致的不高亮
 		for (const editor of activeEditors) {
-			if (line === -1) {
+			if (line === -1 || line === -2) {
 				editor.setDecorations(hintDecoType, []);
 			} else {
 				editor.setDecorations(hintDecoType, [{
@@ -43,8 +44,11 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				}]);
 			}
 		}
-		if (autoLocate && activeEditors.length !== 0 && line !== -1 && line !== highlighting) {
-			revealLine(activeEditors[0], line);
+		if (!disable_reveal) {
+			// 判断 highlighting !== -2 ，表示如果这次高亮是跟在文本保存后面的，那么就不需要跳转行数
+			if (autoLocate && activeEditors.length !== 0 && line !== -1 && line !== -2 && highlighting !== -2) {
+				revealLine(activeEditors[0], line);
+			}
 		}
 		highlighting = line;
 	}
@@ -76,7 +80,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		activeEditors = editors.filter(editor => {
 			return filePath == path.resolve(editor.document.fileName).toLowerCase();
 		});
-		highlightLine(highlighting);
+		highlightLine(highlighting, true);
 	}
 
 	function getEditor(): vscode.TextEditor | undefined {
@@ -204,9 +208,10 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	}));
 
 	subscriptions.push(vscode.workspace.onDidSaveTextDocument((document) => {
-		if (!client) {
+		if (!client || document.uri !== getEditor()?.document.uri) {
 			return;
 		}
+		highlightLine(-2);
 		socket.send(JSON.stringify({
 			janim: {
 				type: 'file_saved',
