@@ -26,50 +26,67 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 		backgroundColor: { id: 'janim_toolbox.lineno_background' }
 	});
 
-	let cachedEditor: vscode.TextEditor | undefined = undefined;
-
-	function getEditor(): vscode.TextEditor | undefined {
-		if (!client) {
-			return undefined;
-		}
-		if (cachedEditor) {
-			return cachedEditor;
-		}
-		const filePath = path.resolve(client.filePath).toLowerCase()
-		for (let editor of vscode.window.visibleTextEditors) {
-			if (filePath == path.resolve(editor.document.fileName).toLowerCase()) {
-				cachedEditor = editor;
-				return editor;
-			}
-		}
-		return undefined;
-	}
-
 	let highlighting = -1;
 	let autoLocate = true;
 
-	function highlightLine(editor: vscode.TextEditor, line: number) {
-		if (line === -1) {
-			editor.setDecorations(hintDecoType, []);
-		} else {
-			editor.setDecorations(hintDecoType, [{
-				range: new vscode.Range(
-					new vscode.Position(line, 0),
-					new vscode.Position(line + 1, 0)
-				),
-				hoverMessage: '执行到的位置'
-			}]);
-			if (autoLocate && line !== highlighting) {
-				revealLine(editor, line);
+	function highlightLine(line: number) {
+		for (const editor of activeEditors) {
+			if (line === -1) {
+				editor.setDecorations(hintDecoType, []);
+			} else {
+				editor.setDecorations(hintDecoType, [{
+					range: new vscode.Range(
+						new vscode.Position(line, 0),
+						new vscode.Position(line + 1, 0)
+					),
+					hoverMessage: '执行到的位置'
+				}]);
 			}
 		}
+		if (autoLocate && activeEditors.length !== 0 && line !== -1 && line !== highlighting) {
+			revealLine(activeEditors[0], line);
+		}
 		highlighting = line;
+	}
+
+	function hideDecorations() {
+		for (const editor of activeEditors) {
+			editor.setDecorations(hintDecoType, []);
+		}
 	}
 
 	function revealLine(editor: vscode.TextEditor, line: number) {
 		const pos = new vscode.Position(line, 0);
 		editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
 	}
+
+	// =========== Active Editor =========
+
+	let activeEditors: vscode.TextEditor[] = [];
+
+	function updateActiveEditors(editors: readonly vscode.TextEditor[] | undefined = undefined) {
+		activeEditors = [];
+		if (!client) {
+			return;
+		}
+		if (editors === undefined) {
+			editors = vscode.window.visibleTextEditors;
+		}
+		const filePath = path.resolve(client.filePath).toLowerCase();
+		activeEditors = editors.filter(editor => {
+			return filePath == path.resolve(editor.document.fileName).toLowerCase();
+		});
+		highlightLine(highlighting);
+	}
+
+	function getEditor(): vscode.TextEditor | undefined {
+		if (activeEditors.length === 0) {
+			return undefined;
+		}
+		return activeEditors[0];
+	}
+
+	subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(updateActiveEditors));
 
 	// ========= Socket =========
 	//
@@ -90,10 +107,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				}
 
 				case 'close_event': {
-					const editor = getEditor();
-					if (editor) {
-						highlightLine(editor, -1);
-					}
+					highlightLine(-1);
 					setClient(undefined);
 					break;
 				}
@@ -108,10 +122,7 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 						break;
 					}
 					const lineno = json.janim.data - 1;
-					const editor = getEditor();
-					if (editor) {
-						highlightLine(editor, lineno);
-					}
+					highlightLine(lineno);
 					break;
 				}
 			}
@@ -124,9 +135,9 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 			statusBarItem.text = `已连接至界面端 ${client.port}`;
 		} else {
 			textChanged = false;
-			cachedEditor = undefined;
 			statusBarItem.text = '未连接至界面端';
 		}
+		updateActiveEditors();
 	}
 
 	async function ensurePortAvailable(): Promise<boolean> {
@@ -184,15 +195,12 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 	subscriptions.push(vscode.workspace.onDidChangeTextDocument((event) => {
 		// 由于在保存时会触发 0 变化的文字更改事件，所以这里过滤
-		if (event.contentChanges.length === 0 || vscode.window.activeTextEditor !== getEditor()) {
+		if (event.contentChanges.length === 0 || vscode.window.activeTextEditor?.document.uri !== getEditor()?.document.uri) {
 			return;
 		}
 
 		textChanged = true;
-		const editor = getEditor();
-		if (editor) {
-			highlightLine(editor, -1);
-		}
+		hideDecorations();
 	}));
 
 	subscriptions.push(vscode.workspace.onDidSaveTextDocument((document) => {
@@ -205,13 +213,6 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 				file_path: document.fileName
 			}
 		}), client.port);
-	}));
-
-	subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
-		// 因为切换活动编辑器后，原有的 deco 会被清除，所以这里需要重新设置
-		if (editor && editor.document.uri === getEditor()?.document.uri) {
-			highlightLine(editor, highlighting);
-		}
 	}));
 
 	subscriptions.push(vscode.commands.registerCommand('janim-toolbox.connect', async () => {
